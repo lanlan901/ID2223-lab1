@@ -1,26 +1,38 @@
-name: air-quality-daily
+name: Run Feature Pipeline Notebook
 
 on:
-  workflow_dispatch:
-    schedule:
-    - cron: '11 6 * * *'
+  schedule:
+    - cron: '0 0 * * *'  # 每天午夜运行一次
 
 jobs:
-  schedule_pipelines:
-    runs-on: ubuntu-latest
-
-    permissions:
-      pages: write
-      contents: write
+  feature-pipeline:
+    runs-on: ubuntu-latest  # 使用最新的 Ubuntu 运行环境
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      # Checkout your repository
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      # Set up Python environment
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2
         with:
-          node-version: '20'
-    
-      - name: execute python workflows from bash script
-        env:
-          HOPSWORKS_API_KEY: ${{ secrets.HOPSWORKS_API_KEY }}
-        run: 
-          jupyter nbconvert --to notebook --execute 2_daily-feature-pipeline.ipynb
+          python-version: '3.9'
+
+      # Install dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install jupyter hopsworks pandas requests
+
+      # Run the Jupyter notebook using nbconvert
+      - name: Run daily feature pipeline notebook
+        run: |
+          jupyter nbconvert --to notebook --execute 2_daily-feature-pipeline.ipynb --output 2_daily-feature-pipeline-executed.ipynb
+
+      # Upload the result to GitHub (optional)
+      - name: Upload executed notebook
+        uses: actions/upload-artifact@v2
+        with:
+          name: executed-notebook
+          path: 2_daily-feature-pipeline-executed.ipynb
